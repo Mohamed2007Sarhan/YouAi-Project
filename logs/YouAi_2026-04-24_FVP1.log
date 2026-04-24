@@ -1,0 +1,26 @@
+2026-04-24 17:18:07,500 [comtypes.client._code_cache] INFO: Imported existing <module 'comtypes.gen' from 'C:\\Users\\MohamedSarhan\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2026-04-24 17:18:07,500 [comtypes.client._code_cache] INFO: Using writeable comtypes cache directory: 'C:\Users\MohamedSarhan\AppData\Local\Programs\Python\Python310\lib\site-packages\comtypes\gen'
+2026-04-24 17:18:10,412 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:18:10,414 [YouAi.Start] INFO: Initializing System Check...
+2026-04-24 17:18:10,505 [YouAi.Start] INFO: Memory is 100% complete. Launching system immediately.
+2026-04-24 17:18:10,505 [YouAi.Start] INFO: Launching Main Visualization Interface...
+2026-04-24 17:18:10,526 [YouAi.Start] INFO: Language detected: Arabic (ar-EG)
+2026-04-24 17:18:11,218 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:18:11,218 [YouAi.Start] INFO: Autonomous Agent initialized (Standby mode).
+2026-04-24 17:18:11,219 [YouAi.Start] INFO: TaskWatcherManager initialized.
+2026-04-24 17:18:15,749 [YouAi.Start] INFO: User input: هاي هاو ار يو (Depth: 0)
+2026-04-24 17:18:16,042 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:18:20,443 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:18:20,494 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:18:21,362 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:18:21,364 [NvidiaLLM] INFO: Reviser completed successfully.
+2026-04-24 17:18:21,367 [YouAi.Start] INFO: Speaking: أهلاً! كيف يمكنني مساعدتك اليوم؟
+2026-04-24 17:18:21,368 [TTSEngine] INFO: Speaking via gTTS Fallback: أهلا! كيف يمكنني مساعدتك اليوم؟
+2026-04-24 17:18:29,724 [YouAi.Start] INFO: User input: من انت (Depth: 0)
+2026-04-24 17:18:29,996 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:18:39,898 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:18:39,900 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:19:18,532 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:19:18,708 [NvidiaLLM] INFO: Reviser completed successfully.
+2026-04-24 17:19:18,710 [YouAi.Start] INFO: Speaking: أنا محمد سرحان، مهندس برمجيات سينيور. لدي مهارات في البرمجة وتطوير البرمجيات وإدارة المشاريع التقنية. أحب التكنولوجيا والبرمجة والمشاركة في مشاريع مفتوحة المصدر. عادة ما أتحدث بشكل مباشر ومختصر، وأؤمن بأهمية التميز التقني والتعاون في العمل.
+2026-04-24 17:19:18,710 [TTSEngine] INFO: Speaking via gTTS Fallback: أنا محمد سرحان مهندس برمجيات سينيور. لدي مهارات في البرمجة وتطوير البرمجيات وإدارة المشاريع التقنية. أحب التكنولوجيا والبرمجة والمشاركة في مشاريع مفتوحة المصدر. عادة ما أتحدث بشكل مباشر ومختصر وأؤمن بأهمية التميز التقني والتعاون في العمل.

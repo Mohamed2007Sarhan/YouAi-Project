@@ -1,0 +1,10 @@
+2026-04-24 17:16:25,057 [comtypes.client._code_cache] INFO: Imported existing <module 'comtypes.gen' from 'C:\\Users\\MohamedSarhan\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2026-04-24 17:16:25,058 [comtypes.client._code_cache] INFO: Using writeable comtypes cache directory: 'C:\Users\MohamedSarhan\AppData\Local\Programs\Python\Python310\lib\site-packages\comtypes\gen'
+2026-04-24 17:16:28,262 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:16:28,264 [YouAi.Start] INFO: Initializing System Check...
+2026-04-24 17:16:28,364 [YouAi.Start] INFO: Memory is 100% complete. Launching system immediately.
+2026-04-24 17:16:28,365 [YouAi.Start] INFO: Launching Main Visualization Interface...
+2026-04-24 17:16:28,393 [YouAi.Start] INFO: Language detected: Arabic (ar-EG)
+2026-04-24 17:16:29,738 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:16:29,739 [YouAi.Start] INFO: Autonomous Agent initialized (Standby mode).
+2026-04-24 17:16:29,741 [YouAi.Start] INFO: TaskWatcherManager initialized.

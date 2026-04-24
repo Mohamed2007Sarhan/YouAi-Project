@@ -126,6 +126,13 @@ class AppOrchestrator(QObject):
         self.mood = MoodManager()
         self.system_language = "en-US"
         
+        try:
+            from Backend.tools.tool_manager import ToolManager
+            self.tool_manager = ToolManager()
+        except ImportError as e:
+            logger.warning(f"Failed to import ToolManager: {e}")
+            self.tool_manager = None
+        
         self.signals = WorkerSignals()
         self.signals.finished.connect(self.launch_main_system)
         self.signals.relaunch_setup.connect(self.show_voice_setup)
@@ -1157,7 +1164,13 @@ class AppOrchestrator(QObject):
                     {"role": "system", "content": persona_context},
                     {"role": "user",   "content": text}
                 ]
-                response = self.llm.chat(messages, is_talking_to_user=True)
+                
+                chat_kwargs = {"is_talking_to_user": True}
+                if getattr(self, 'tool_manager', None):
+                    chat_kwargs["tools"] = self.tool_manager.get_schemas()
+                    chat_kwargs["tool_executor"] = self.tool_manager
+
+                response = self.llm.chat(messages, **chat_kwargs)
 
                 # -------------------------------------------------------
                 # TASK PLANNER: لو المهمة طويلة اعمل خطة ونفذها

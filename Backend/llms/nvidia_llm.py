@@ -80,6 +80,8 @@ class NvidiaLLM:
         stream: bool = False,
         is_talking_to_user: bool = True,
         use_reviser: bool = True,
+        tools: Optional[List[Dict]] = None,
+        tool_executor=None,
         **kwargs,          # absorb any extra kwargs (e.g. use_reviser=False from deep_setup)
     ):
         """Send a chat message to the NVIDIA LLM."""
@@ -96,39 +98,82 @@ class NvidiaLLM:
         target_model = model or self.default_model
         logger.info(f"Sending chat request | model={target_model} | reviser={use_reviser}")
 
-        try:
-            completion = self.client.chat.completions.create(
-                model=target_model,
-                messages=mod_messages,
-                temperature=temperature,
-                top_p=top_p,
-                max_tokens=max_tokens,
-                frequency_penalty=0,
-                presence_penalty=0,
-                stream=stream,
-            )
+        # Allow up to 5 tool-call iterations per user request to prevent infinite loops
+        for _ in range(5):
+            try:
+                completion_kwargs = {
+                    "model": target_model,
+                    "messages": mod_messages,
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "max_tokens": max_tokens,
+                    "frequency_penalty": 0,
+                    "presence_penalty": 0,
+                    "stream": stream,
+                }
+                
+                if tools and tool_executor:
+                    completion_kwargs["tools"] = tools
 
-            if stream:
-                if use_reviser:
-                    logger.warning("Streaming on — Reviser skipped.")
-                return self._stream_generator(completion)
+                completion = self.client.chat.completions.create(**completion_kwargs)
 
-            response_content = completion.choices[0].message.content
-            # Strip NVIDIA <think>…</think> reasoning blocks if present
-            if "<think>" in response_content and "</think>" in response_content:
-                response_content = response_content.split("</think>", 1)[-1].strip()
+                if stream:
+                    if use_reviser:
+                        logger.warning("Streaming on — Reviser skipped.")
+                    return self._stream_generator(completion)
 
-            logger.info("Chat request completed successfully.")
+                msg = completion.choices[0].message
+                
+                if getattr(msg, "tool_calls", None) and tools and tool_executor:
+                    logger.info(f"LLM requested {len(msg.tool_calls)} tool calls.")
+                    
+                    assistant_msg = {"role": "assistant", "content": msg.content or "", "tool_calls": []}
+                    for tc in msg.tool_calls:
+                        assistant_msg["tool_calls"].append({
+                            "id": tc.id,
+                            "type": "function",
+                            "function": {
+                                "name": tc.function.name,
+                                "arguments": tc.function.arguments
+                            }
+                        })
+                    mod_messages.append(assistant_msg)
+                    
+                    for tc in msg.tool_calls:
+                        tool_name = tc.function.name
+                        tool_args = tc.function.arguments
+                        result = tool_executor.execute(tool_name, tool_args)
+                        
+                        mod_messages.append({
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "name": tool_name,
+                            "content": result
+                        })
+                    
+                    # Loop continues, sending tool results back to LLM
+                    continue
 
-            # Reviser step — skip if JSON (tool output)
-            if use_reviser and "{" not in response_content:
-                response_content = self._revise_response(response_content, target_model)
+                else:
+                    response_content = msg.content or ""
+                    # Strip NVIDIA <think>…</think> reasoning blocks if present
+                    if "<think>" in response_content and "</think>" in response_content:
+                        response_content = response_content.split("</think>", 1)[-1].strip()
 
-            return response_content
+                    logger.info("Chat request completed successfully.")
 
-        except Exception as e:
-            logger.error(f"Error during chat request: {e}")
-            raise
+                    # Reviser step — skip if JSON (tool output)
+                    if use_reviser and "{" not in response_content:
+                        response_content = self._revise_response(response_content, target_model)
+
+                    return response_content
+
+            except Exception as e:
+                logger.error(f"Error during chat request: {e}")
+                raise
+        
+        logger.warning("Max tool calls reached. Returning last response.")
+        return response_content or "Tool execution limit reached."
 
     # ── Reviser ───────────────────────────────────────────────────────────────
 

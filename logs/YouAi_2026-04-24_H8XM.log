@@ -1,0 +1,26 @@
+2026-04-24 17:56:11,495 [comtypes.client._code_cache] INFO: Imported existing <module 'comtypes.gen' from 'C:\\Users\\MohamedSarhan\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2026-04-24 17:56:11,495 [comtypes.client._code_cache] INFO: Using writeable comtypes cache directory: 'C:\Users\MohamedSarhan\AppData\Local\Programs\Python\Python310\lib\site-packages\comtypes\gen'
+2026-04-24 17:56:14,214 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:56:14,245 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:56:14,259 [DigitalTwinOrchestrator] WARNING: Gmail API not configured properly.
+2026-04-24 17:56:14,260 [DigitalTwinOrchestrator] WARNING: Telegram API not configured properly.
+2026-04-24 17:56:14,260 [DigitalTwinOrchestrator] WARNING: Twitter API not configured properly.
+2026-04-24 17:56:14,261 [YouAi.Start] INFO: Initializing System Check...
+2026-04-24 17:56:14,311 [YouAi.Start] INFO: Memory is 100% complete. Launching system immediately.
+2026-04-24 17:56:14,312 [YouAi.Start] INFO: Launching Main Visualization Interface...
+2026-04-24 17:56:14,329 [YouAi.Start] INFO: Language detected: Arabic (ar-EG)
+2026-04-24 17:56:15,083 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:56:15,083 [YouAi.Start] INFO: Autonomous Agent initialized (Standby mode).
+2026-04-24 17:56:15,084 [YouAi.Start] INFO: TaskWatcherManager initialized.
+2026-04-24 17:56:19,957 [YouAi.Start] INFO: User input: ما الذي تراه على الشاشه (Depth: 0)
+2026-04-24 17:56:20,205 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:56:26,402 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:56:26,413 [NvidiaLLM] INFO: LLM requested 1 tool calls.
+2026-04-24 17:56:26,414 [ToolManager] INFO: Executing tool: analyze_screen with args: {}
+2026-04-24 17:57:07,773 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:57:07,775 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:57:15,901 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:57:15,902 [NvidiaLLM] WARNING: Reviser failed, using original draft. Error: argument of type 'NoneType' is not iterable
+2026-04-24 17:57:15,904 [YouAi.Start] INFO: Speaking: عندما نظرت إلى الشاشة، لاحظت أن هناك واجهة برمجية مفتوحة تضم نافذة بعنوان "YOU AI" باللون الأزرق المائل في الأعلى، مع عنوان فرعي "النموذج الرقمي" بالأبيض تحته. في وسط النافذة، يظهر مصفوفة من الأشكال المربعة بلون أزرق مائل مع نص "أنا أستمع..." بالأبيض في الأسفل. الخلفية السوداء تُبرز الألوان الأخرى بشكل واضح. على الجانب الأيسر، هناك قائمة بالملفات والمجلدات، بينما يظهر عمود من الكود على اليمين. هذا المظهر يشير إلى تركيز على الذكاء الاصطناعي والتعلم الآلي، مع أن نافذة "YOU AI" قد تمثل نسخة رقمية أو كيان مدعوم بالذكاء الاصطناعي.
+2026-04-24 17:57:15,907 [TTSEngine] INFO: Speaking via gTTS Fallback: عندما نظرت إلى الشاشة لاحظت أن هناك واجهة برمجية مفتوحة تضم نافذة بعنوان "YOU AI" باللون الأزرق المائل في الأعلى مع عنوان فرعي "النموذج الرقمي" بالأبيض تحته. في وسط النافذة يظهر مصفوفة من الأشكال المربعة بلون أزرق مائل مع نص "أنا أستمع..." بالأبيض في الأسفل. الخلفية السوداء تبرز الألوان الأخرى بشكل واضح. على الجانب الأيسر هناك قائمة بالملفات والمجلدات بينما يظهر عمود من الكود على اليمين. هذا المظهر يشير إلى تركيز على الذكاء الاصطناعي والتعلم الآلي مع أن نافذة "YOU AI" قد تمثل نسخة رقمية أو كيان مدعوم بالذكاء الاصطناعي.
+2026-04-24 17:57:47,649 [TTSEngine] ERROR: gTTS Fallback Error: 200 (OK) from TTS API. Probable cause: Unknown

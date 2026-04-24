@@ -167,6 +167,10 @@ class GiantMemoryManager:
             else:
                 insert_vals.append(self._encrypt_val(val))
                 
+        if not insert_cols:
+            # Nothing to insert (e.g. all columns provided were invalid)
+            return -1
+            
         placeholders = ", ".join(["?"] * len(insert_vals))
         col_names_str = ", ".join(insert_cols)
         

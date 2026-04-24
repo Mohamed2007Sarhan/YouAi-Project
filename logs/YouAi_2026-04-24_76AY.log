@@ -1,0 +1,73 @@
+2026-04-24 17:43:42,443 [comtypes.client._code_cache] INFO: Imported existing <module 'comtypes.gen' from 'C:\\Users\\MohamedSarhan\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2026-04-24 17:43:42,445 [comtypes.client._code_cache] INFO: Using writeable comtypes cache directory: 'C:\Users\MohamedSarhan\AppData\Local\Programs\Python\Python310\lib\site-packages\comtypes\gen'
+2026-04-24 17:43:45,325 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:43:45,364 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:43:45,379 [DigitalTwinOrchestrator] WARNING: Gmail API not configured properly.
+2026-04-24 17:43:45,379 [DigitalTwinOrchestrator] WARNING: Telegram API not configured properly.
+2026-04-24 17:43:45,380 [DigitalTwinOrchestrator] WARNING: Twitter API not configured properly.
+2026-04-24 17:43:45,380 [YouAi.Start] INFO: Initializing System Check...
+2026-04-24 17:43:45,446 [YouAi.Start] INFO: Memory is 100% complete. Launching system immediately.
+2026-04-24 17:43:45,446 [YouAi.Start] INFO: Launching Main Visualization Interface...
+2026-04-24 17:43:45,464 [YouAi.Start] INFO: Language detected: Arabic (ar-EG)
+2026-04-24 17:43:46,311 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:43:46,313 [YouAi.Start] INFO: Autonomous Agent initialized (Standby mode).
+2026-04-24 17:43:46,313 [YouAi.Start] INFO: TaskWatcherManager initialized.
+2026-04-24 17:43:56,275 [YouAi.Start] INFO: User input: احفظ عندك ان وجبتي المفضله هي (Depth: 0)
+2026-04-24 17:43:56,534 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:44:04,177 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:44:04,188 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:44:05,785 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:44:05,786 [NvidiaLLM] INFO: Reviser completed successfully.
+2026-04-24 17:44:05,788 [YouAi.Start] INFO: Speaking: لا أتذكر أنك ذكرت لي من قبل عن وجبة مفضلة. من فضلك أخبرني ما هي وجبتك المفضلة حتى أتمكن من تسجيلها في ذكرياتي.
+2026-04-24 17:44:05,789 [TTSEngine] INFO: Speaking via gTTS Fallback: لا أتذكر أنك ذكرت لي من قبل عن وجبة مفضلة. من فضلك أخبرني ما هي وجبتك المفضلة حتى أتمكن من تسجيلها في ذكرياتي.
+2026-04-24 17:44:27,754 [YouAi.Start] INFO: User input: البيتزا احفظها عندك (Depth: 0)
+2026-04-24 17:44:28,029 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:44:44,819 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:44:44,822 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:44:45,748 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:44:45,748 [NvidiaLLM] INFO: Reviser completed successfully.
+2026-04-24 17:44:45,751 [YouAi.Start] INFO: Speaking: I don't recall that exactly. (لا أتذكر ذلك بدقة.)
+2026-04-24 17:44:45,752 [TTSEngine] INFO: Speaking via gTTS Fallback: I don't recall that exactly. (لا أتذكر ذلك بدقة.)
+2026-04-24 17:44:59,778 [YouAi.Start] INFO: User input: احفظ لي ذاكرتك اني احب البيتزا (Depth: 0)
+2026-04-24 17:45:00,055 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:45:07,737 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:45:07,752 [NvidiaLLM] INFO: LLM requested 1 tool calls.
+2026-04-24 17:45:07,754 [ToolManager] INFO: Executing tool: insert_memory_record with args: {'category': 'personal_identity', 'data_json': {'interests': ['technology', 'coding', 'open source', 'pizza']}}
+2026-04-24 17:45:07,757 [ToolManager] ERROR: Error executing tool insert_memory_record:
+Traceback (most recent call last):
+  File "C:\Users\MohamedSarhan\Desktop\YouAi\aiavatarkit-main\Backend\tools\tool_manager.py", line 208, in execute
+    record_id = self.memory_manager.insert_record(cat, data)
+  File "C:\Users\MohamedSarhan\Desktop\YouAi\aiavatarkit-main\Backend\memory\memory_management.py", line 177, in insert_record
+    cursor.execute(sql, tuple(insert_vals))
+sqlite3.OperationalError: near ")": syntax error
+
+2026-04-24 17:45:15,828 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:45:15,829 [NvidiaLLM] INFO: LLM requested 1 tool calls.
+2026-04-24 17:45:15,830 [ToolManager] INFO: Executing tool: insert_memory_record with args: {'category': 'personal_identity', 'data_json': '{"interests": ["technology", "coding", "open source", "pizza"]}'}
+2026-04-24 17:45:23,132 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:45:23,135 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:45:24,919 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:45:24,921 [NvidiaLLM] INFO: Reviser completed successfully.
+2026-04-24 17:45:24,972 [YouAi.Start] INFO: Speaking: تم حفظ أنك تحب البيتزا في قاعدة البيانات. **النتيجة:** أضفت "البيتزا" إلى قائمة المصادر في قسم الهوية الشخصية بنجاح.
+2026-04-24 17:45:24,972 [TTSEngine] INFO: Speaking via gTTS Fallback: تم حفظ أنك تحب البيتزا في قاعدة البيانات. النتيجة أضفت "البيتزا" إلى قائمة المصادر في قسم الهوية الشخصية بنجاح.
+2026-04-24 17:45:46,839 [YouAi.Start] INFO: User input: ما البرامج المفتوحه على الشاشه حاليا (Depth: 0)
+2026-04-24 17:45:47,094 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:45:51,168 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:45:51,170 [NvidiaLLM] INFO: LLM requested 1 tool calls.
+2026-04-24 17:45:51,171 [ToolManager] INFO: Executing tool: analyze_screen with args: {}
+2026-04-24 17:46:33,604 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:46:33,608 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:46:36,104 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:46:36,105 [NvidiaLLM] INFO: Reviser completed successfully.
+2026-04-24 17:46:36,145 [YouAi.Start] INFO: Speaking: عذرًا، حدث خطأ تقني في محاولة تحليل الشاشة. هل ترغب أن أجرب طريقة بديلة باستخدام أوامر النظام للكشف عن البرامج المفتوحة؟  
+<ERROR> السبب: انقطاع الاتصال بالخادم عند محاولة تحليل الشاشة. </ERROR>
+2026-04-24 17:46:36,146 [TTSEngine] INFO: Speaking via gTTS Fallback: عذرا حدث خطأ تقني في محاولة تحليل الشاشة. هل ترغب أن أجرب طريقة بديلة باستخدام أوامر النظام للكشف عن البرامج المفتوحة؟ ERROR السبب انقطاع الاتصال بالخادم عند محاولة تحليل الشاشة. ERROR
+2026-04-24 17:46:38,847 [YouAi.Start] INFO: User input: ما الذي تراه على (Depth: 0)
+2026-04-24 17:46:39,067 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:46:47,489 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:46:47,491 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:46:48,904 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:46:48,905 [NvidiaLLM] INFO: Reviser completed successfully.
+2026-04-24 17:46:48,912 [YouAi.Start] INFO: Speaking: السؤال غير مكتمل، من فضلك أكمل سؤالك أو أشرح ما ترغب في معرفته. أنا جاهز للمساعدة في أي موضوع تقني أو شخصي أو مهني.
+2026-04-24 17:46:48,913 [TTSEngine] INFO: Speaking via gTTS Fallback: السؤال غير مكتمل من فضلك أكمل سؤالك أو أشرح ما ترغب في معرفته. أنا جاهز للمساعدة في أي موضوع تقني أو شخصي أو مهني.
+2026-04-24 17:46:48,915 [TTSEngine] ERROR: gTTS Fallback Error: [Errno 13] Permission denied: 'temp_speech.mp3'

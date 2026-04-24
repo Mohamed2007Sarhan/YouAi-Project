@@ -1,0 +1,23 @@
+2026-04-24 17:34:06,936 [comtypes.client._code_cache] INFO: Imported existing <module 'comtypes.gen' from 'C:\\Users\\MohamedSarhan\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2026-04-24 17:34:06,937 [comtypes.client._code_cache] INFO: Using writeable comtypes cache directory: 'C:\Users\MohamedSarhan\AppData\Local\Programs\Python\Python310\lib\site-packages\comtypes\gen'
+2026-04-24 17:34:09,721 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:34:09,722 [YouAi.Start] INFO: Initializing System Check...
+2026-04-24 17:34:09,780 [YouAi.Start] INFO: Memory is 100% complete. Launching system immediately.
+2026-04-24 17:34:09,781 [YouAi.Start] INFO: Launching Main Visualization Interface...
+2026-04-24 17:34:09,800 [YouAi.Start] INFO: Language detected: Arabic (ar-EG)
+2026-04-24 17:34:10,721 [NvidiaLLM] INFO: NvidiaLLM client initialized. Model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+2026-04-24 17:34:10,722 [YouAi.Start] INFO: Autonomous Agent initialized (Standby mode).
+2026-04-24 17:34:10,722 [YouAi.Start] INFO: TaskWatcherManager initialized.
+2026-04-24 17:34:16,176 [YouAi.Start] INFO: User input: افتح برنامج الكاميرا (Depth: 0)
+2026-04-24 17:34:16,452 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=True
+2026-04-24 17:34:23,732 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:34:23,758 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:34:23,760 [YouAi.Start] INFO: Executing Tool: open_app -> start microsoft.windows.camera:
+2026-04-24 17:34:24,762 [DeviceControl] INFO: Opening app: start microsoft.windows.camera:
+2026-04-24 17:34:28,785 [YouAi.Start] INFO: [ActionResult] [SUCCESS] Command sent: 'start microsoft.windows.camera:'. No process name given to verify.
+2026-04-24 17:34:29,286 [NvidiaLLM] INFO: Sending chat request | model=nvidia/llama-3.3-nemotron-super-49b-v1.5 | reviser=False
+2026-04-24 17:34:34,864 [httpx] INFO: HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 17:34:34,866 [NvidiaLLM] INFO: Chat request completed successfully.
+2026-04-24 17:34:34,866 [YouAi.Start] INFO: Action confirmed successful: [SUCCESS] Command sent: 'start microsoft.windows.camera:'. No process name given to verify.
+2026-04-24 17:34:34,866 [YouAi.Start] INFO: Speaking: تم فتح برنامج الكاميرا بنجاح، هل ترى الشاشة الان؟
+2026-04-24 17:34:34,870 [TTSEngine] INFO: Speaking via gTTS Fallback: تم فتح برنامج الكاميرا بنجاح هل ترى الشاشة الان؟
