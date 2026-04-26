@@ -36,7 +36,7 @@ class WatcherJob:
     def __init__(
         self,
         watcher_id: str,
-        watch_type: str,          # "file" | "url" | "process" | "value"
+        watch_type: str,          # "file" | "url" | "process" | "value" | "screen"
         target: str,              # المسار / الرابط / اسم الـ process
         on_change: Callable,      # callback(watcher_id, old, new)
         interval: float = 5.0,   # ثواني بين كل فحص
@@ -96,6 +96,8 @@ class WatcherJob:
             if self.value_fn:
                 return self.value_fn()
             return None
+        elif self.watch_type == "screen":
+            return self._hash_screen_region(self.target)
         return None
 
     def _hash_file(self, path: str) -> Optional[str]:
@@ -125,6 +127,27 @@ class WatcherJob:
             return process_name.lower() in result.stdout.lower()
         except Exception:
             return False
+
+    def _hash_screen_region(self, target: str) -> Optional[str]:
+        """
+        target format:
+        - "full" or ""
+        - "left,top,width,height"
+        """
+        try:
+            from mss import mss
+            with mss() as sct:
+                monitor = sct.monitors[1]
+                t = (target or "").strip().lower()
+                if t and t != "full":
+                    parts = [p.strip() for p in t.split(",")]
+                    if len(parts) == 4 and all(p.lstrip("-").isdigit() for p in parts):
+                        left, top, width, height = [int(x) for x in parts]
+                        monitor = {"left": left, "top": top, "width": width, "height": height}
+                shot = sct.grab(monitor)
+                return hashlib.md5(shot.rgb).hexdigest()
+        except Exception as e:
+            return f"__ERROR__: {e}"
 
     def info(self) -> dict:
         return {
@@ -218,6 +241,7 @@ class TaskWatcherManager:
             "url":     f"🌐 تغيير في الصفحة: {target}",
             "process": f"⚙️ تغيير في حالة البرنامج: {target}  |  الآن: {'شغال ✅' if new_val else 'وقف ❌'}",
             "value":   f"📊 تغيير في القيمة [{watcher_id}]: {old_val} ← {new_val}",
+            "screen":  f"🖥️ تغيير مرصود في الشاشة: {target or 'full-screen'}",
         }
         msg = messages.get(watch_type, f"🔔 تغيير في [{watcher_id}]")
 
@@ -238,7 +262,7 @@ def parse_watch_command(cmd: dict, manager: TaskWatcherManager) -> str:
     JSON المتوقع من الـ AI:
     {
         "watch_action": "create" | "stop" | "list",
-        "watch_type":   "file" | "url" | "process" | "value",
+        "watch_type":   "file" | "url" | "process" | "value" | "screen",
         "target":       "...",
         "interval":     10,
         "watcher_id":   "my_watcher"   (اختياري)
@@ -248,10 +272,13 @@ def parse_watch_command(cmd: dict, manager: TaskWatcherManager) -> str:
     action = cmd.get("watch_action", "create")
 
     if action == "create":
+        interval = float(cmd.get("interval", 5.0))
+        if interval < 1.0:
+            interval = 1.0
         wid = manager.create_watcher(
             watch_type = cmd.get("watch_type", "file"),
             target     = cmd.get("target", ""),
-            interval   = float(cmd.get("interval", 5.0)),
+            interval   = interval,
             custom_id  = cmd.get("watcher_id"),
         )
         return f"✅ مراقب جديد شغال | ID: {wid} | هيبلغك لما يحصل أي تغيير."

@@ -28,6 +28,8 @@ class TaskPlanner:
         "steps", "then", "after that", "first", "second", "third",
         "plan", "organize", "setup", "configure", "install", "and then",
         "finally", "lastly", "next", "followed by",
+        "مهمة", "خطة", "خطه", "نفذ", "تابع", "راقب",
+        "task", "workflow", "monitor", "autopilot", "execute",
     ]
 
     # حد أدنى لعدد الخطوات يعتبر المهمة "طويلة"
@@ -45,18 +47,46 @@ class TaskPlanner:
         - لو الـ response يحتوي على قايمة خطوات واضحة (أرقام / نقاط)
         - أو النص الأصلي فيه مؤشرات تعقيد
         """
+        # 0. المستخدم طلب خطة صراحة
+        user_lower = user_text.lower()
+        explicit_plan_terms = ["خطة", "خطه", "رتب", "step by step", "plan", "workflow"]
+        if any(term in user_lower for term in explicit_plan_terms):
+            return True
+
         # 1. عد الخطوات المرقمة في رد الـ AI
         numbered = re.findall(r'(?:^|\n)\s*(?:\d+[\.\-\):]|\-|\*|•)', ai_response)
         if len(numbered) >= self.MIN_STEPS_FOR_PLAN:
             return True
 
         # 2. كلمات دلالة التعقيد في طلب المستخدم
-        text_lower = user_text.lower()
-        matched = sum(1 for kw in self.COMPLEXITY_KEYWORDS if kw.lower() in text_lower)
+        matched = sum(1 for kw in self.COMPLEXITY_KEYWORDS if kw.lower() in user_lower)
         if matched >= 2:
             return True
 
         return False
+
+    def generate_plan_from_task(self, task_description: str) -> list[dict]:
+        """
+        توليد خطة احتياطية من وصف المهمة نفسه لو رد الـ AI ماطلعش خطوات كفاية.
+        """
+        chunks = re.split(r'(?:\bثم\b|\bوبعدين\b|\bبعدها\b|,|،|;|؛|\band then\b|\bthen\b|\bnext\b)', task_description)
+        steps = []
+        step_id = 1
+        for raw in chunks:
+            s = raw.strip(" .:-")
+            if len(s) >= 6:
+                steps.append({"id": step_id, "title": s, "status": "pending"})
+                step_id += 1
+            if step_id > 8:
+                break
+
+        if len(steps) < self.MIN_STEPS_FOR_PLAN:
+            steps = [
+                {"id": 1, "title": "Analyze the task requirements and constraints", "status": "pending"},
+                {"id": 2, "title": "Execute the required actions in order", "status": "pending"},
+                {"id": 3, "title": "Validate the final outcome and report status", "status": "pending"},
+            ]
+        return steps
 
     # ------------------------------------------------------------------
     # 2. توليد الخطة من رد الـ AI أو طلب المستخدم

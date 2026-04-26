@@ -3,6 +3,9 @@ import subprocess
 import time
 import os
 from typing import Optional
+import queue
+import threading
+import uuid
 
 try:
     import pyautogui
@@ -20,6 +23,8 @@ class DeviceControl:
     def __init__(self):
         pyautogui.FAILSAFE = True
         pyautogui.PAUSE = 0.5
+        self._terminal_sessions = {}
+        self._terminal_lock = threading.Lock()
 
     def move_mouse(self, x: int, y: int, duration: float = 1.0) -> str:
         """Move the mouse to a specific screen coordinate."""
@@ -129,6 +134,143 @@ class DeviceControl:
             return f"[ERROR] Command timed out after {timeout}s: {command}"
         except Exception as e:
             return f"[ERROR] run_command_and_capture failed: {e}"
+
+    # -------------------------------------------------------------------
+    # Persistent terminal sessions
+    # -------------------------------------------------------------------
+    def open_terminal_session(self, visible_to_user: bool = True) -> str:
+        """
+        Open a reusable PowerShell terminal session and keep it alive.
+        """
+        try:
+            proc = subprocess.Popen(
+                ["powershell", "-NoLogo", "-NoExit", "-Command", "-"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                bufsize=1,
+            )
+
+            session_id = uuid.uuid4().hex[:8]
+            output_queue: "queue.Queue[str]" = queue.Queue()
+
+            def _reader():
+                try:
+                    while proc.poll() is None:
+                        line = proc.stdout.readline()
+                        if not line:
+                            continue
+                        output_queue.put(line.rstrip("\n"))
+                except Exception:
+                    pass
+
+            reader_thread = threading.Thread(target=_reader, daemon=True)
+            reader_thread.start()
+
+            session = {
+                "proc": proc,
+                "queue": output_queue,
+                "reader_thread": reader_thread,
+                "visible_to_user": bool(visible_to_user),
+                "created_at": time.time(),
+                "last_used": time.time(),
+            }
+            with self._terminal_lock:
+                self._terminal_sessions[session_id] = session
+            return f"[SUCCESS] Terminal session opened: {session_id} (visible_to_user={bool(visible_to_user)})"
+        except Exception as e:
+            return f"[ERROR] open_terminal_session failed: {e}"
+
+    def run_terminal_command(
+        self,
+        command: str,
+        session_id: Optional[str] = None,
+        keep_open: bool = True,
+        visible_to_user: bool = True,
+        timeout: float = 8.0,
+    ) -> str:
+        """
+        Execute command in a persistent terminal session.
+        If no session_id is provided, creates one automatically.
+        """
+        if not command or not str(command).strip():
+            return "[ERROR] Empty command."
+
+        sid = session_id
+        if not sid:
+            opened = self.open_terminal_session(visible_to_user=visible_to_user)
+            if opened.startswith("[ERROR]"):
+                return opened
+            sid = opened.split(":", 1)[1].strip().split(" ", 1)[0]
+
+        with self._terminal_lock:
+            session = self._terminal_sessions.get(sid)
+        if not session:
+            return f"[ERROR] Terminal session not found: {sid}"
+
+        proc = session["proc"]
+        out_q = session["queue"]
+        marker = f"__YOUAI_CMD_END_{uuid.uuid4().hex[:10]}__"
+        payload = f"{command}\nWrite-Output \"{marker}\"\n"
+
+        try:
+            proc.stdin.write(payload)
+            proc.stdin.flush()
+        except Exception as e:
+            return f"[ERROR] Failed to write to terminal session {sid}: {e}"
+
+        lines = []
+        deadline = time.time() + max(1.0, timeout)
+        while time.time() < deadline:
+            try:
+                line = out_q.get(timeout=0.2)
+            except queue.Empty:
+                if proc.poll() is not None:
+                    break
+                continue
+            if marker in line:
+                break
+            lines.append(line)
+
+        session["last_used"] = time.time()
+        session["visible_to_user"] = bool(visible_to_user)
+        output = "\n".join(lines).strip()
+        visibility = "visible" if visible_to_user else "hidden"
+        base_msg = f"[SUCCESS] session={sid} keep_open={bool(keep_open)} visibility={visibility}"
+
+        if not keep_open:
+            close_msg = self.close_terminal_session(sid)
+            if close_msg.startswith("[ERROR]"):
+                return f"{base_msg}\n[WARN] {close_msg}\n{output}".strip()
+            base_msg = f"{base_msg}\n{close_msg}"
+
+        if visible_to_user:
+            return f"{base_msg}\n{output}".strip() if output else base_msg
+        return base_msg if not output else f"{base_msg}\n[OUTPUT HIDDEN: {len(output)} chars]"
+
+    def close_terminal_session(self, session_id: str) -> str:
+        """
+        Close a running persistent terminal session.
+        """
+        with self._terminal_lock:
+            session = self._terminal_sessions.pop(session_id, None)
+        if not session:
+            return f"[ERROR] Terminal session not found: {session_id}"
+        try:
+            proc = session["proc"]
+            if proc.poll() is None:
+                proc.stdin.write("exit\n")
+                proc.stdin.flush()
+                try:
+                    proc.wait(timeout=2.0)
+                except subprocess.TimeoutExpired:
+                    proc.terminate()
+            return f"[SUCCESS] Terminal session closed: {session_id}"
+        except Exception as e:
+            return f"[ERROR] close_terminal_session failed: {e}"
 
     def check_process_running(self, process_name: str) -> bool:
         """Check if a process is currently running by name."""

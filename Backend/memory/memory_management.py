@@ -30,6 +30,7 @@ class GiantMemoryManager:
         self.env_file_path = self.db_dir / env_path
         
         self.fernet = self._setup_encryption()
+        self.vault = self._setup_vend3end_vault()
         self._setup_default_tables()
         self._fix_importance_floor()
 
@@ -46,6 +47,22 @@ class GiantMemoryManager:
             set_key(str(self.env_file_path), "MEMORY_ENCRYPTION_KEY", key)
             
         return Fernet(key.encode('utf-8'))
+
+    def _setup_vend3end_vault(self):
+        """
+        Bootstraps Vend3end company/user/AI layered encryption wrapper.
+        Memory encryption fails closed if Vend3end is unavailable.
+        """
+        try:
+            from Backend.security.company_vault import get_vault
+            vault = get_vault()
+            if not vault.is_active:
+                raise RuntimeError("Vend3end vault is not active")
+            return vault
+        except Exception as e:
+            raise RuntimeError(
+                f"[SECURITY] Vend3end vault initialization failed. Refusing insecure startup: {e}"
+            ) from e
 
     def _get_connection(self) -> sqlite3.Connection:
         """Returns SQLite connection with dict-like row access."""
@@ -128,13 +145,15 @@ class GiantMemoryManager:
         if val is None:
             val = ""
         str_val = str(val) if not isinstance(val, (dict, list)) else json.dumps(val)
-        return self.fernet.encrypt(str_val.encode('utf-8'))
+        base_layer = self.fernet.encrypt(str_val.encode('utf-8'))
+        return self.vault.encrypt(base_layer)
 
     def _decrypt_val(self, encrypted_bytes: bytes) -> str:
         if not encrypted_bytes:
             return ""
         try:
-            return self.fernet.decrypt(encrypted_bytes).decode('utf-8')
+            unwrapped = self.vault.decrypt(encrypted_bytes)
+            return self.fernet.decrypt(unwrapped).decode('utf-8')
         except Exception:
             return "<DECRYPTION_ERROR_OR_CORRUPT>"
 

@@ -45,13 +45,60 @@ class ToolManager:
                     "type": "function",
                     "function": {
                         "name": "run_terminal_command",
-                        "description": "Execute a terminal/CMD command on the user's computer and return its output.",
+                        "description": "Execute a terminal command in a reusable session that can stay open across multiple commands.",
                         "parameters": {
                             "type": "object",
                             "properties": {
-                                "command": {"type": "string", "description": "The command string to run (e.g. 'dir', 'ping google.com', 'tasklist')."}
+                                "command": {"type": "string", "description": "The command string to run (e.g. 'dir', 'ping google.com', 'tasklist')."},
+                                "session_id": {"type": "string", "description": "Optional existing terminal session ID. If omitted, a new session is created."},
+                                "keep_open": {"type": "boolean", "description": "Whether to keep terminal session open after command. Default true."},
+                                "visible_to_user": {"type": "boolean", "description": "Whether output should be shown to user. Default true."}
                             },
                             "required": ["command"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "open_terminal_session",
+                        "description": "Open a persistent terminal session and return its session_id.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "visible_to_user": {"type": "boolean", "description": "Whether this session is visible in user-facing output. Default true."}
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "close_terminal_session",
+                        "description": "Close a previously opened terminal session by session_id.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "session_id": {"type": "string", "description": "Terminal session ID to close."}
+                            },
+                            "required": ["session_id"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "device_move_mouse",
+                        "description": "Move the mouse pointer to specific coordinates.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "x": {"type": "integer", "description": "X coordinate."},
+                                "y": {"type": "integer", "description": "Y coordinate."},
+                                "duration": {"type": "number", "description": "Move duration in seconds (optional)."}
+                            },
+                            "required": ["x", "y"]
                         }
                     }
                 },
@@ -174,7 +221,27 @@ class ToolManager:
 
         try:
             if tool_name == "run_terminal_command" and self.device_control:
-                return self.device_control.run_command_and_capture(args.get("command", ""))
+                return self.device_control.run_terminal_command(
+                    command=args.get("command", ""),
+                    session_id=args.get("session_id"),
+                    keep_open=args.get("keep_open", True),
+                    visible_to_user=args.get("visible_to_user", True),
+                )
+
+            elif tool_name == "open_terminal_session" and self.device_control:
+                return self.device_control.open_terminal_session(
+                    visible_to_user=args.get("visible_to_user", True)
+                )
+
+            elif tool_name == "close_terminal_session" and self.device_control:
+                return self.device_control.close_terminal_session(args.get("session_id", ""))
+
+            elif tool_name == "device_move_mouse" and self.device_control:
+                return self.device_control.move_mouse(
+                    x=args.get("x"),
+                    y=args.get("y"),
+                    duration=args.get("duration", 1.0),
+                )
 
             elif tool_name == "device_click" and self.device_control:
                 return self.device_control.click(
