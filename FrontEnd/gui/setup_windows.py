@@ -7,6 +7,23 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QFont
 
+PRIMARY = "#66FCF1"
+SECONDARY = "#B388EB"
+TEXT_SOFT = "#C5C6C7"
+
+
+def _add_stage_badge(parent_layout, text: str, color: str = PRIMARY):
+    badge = QLabel(text)
+    badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    badge.setStyleSheet(
+        f"color:{color}; background-color: rgba(102,252,241,0.10); "
+        "border:1px solid rgba(102,252,241,0.35); border-radius:12px; "
+        "padding:6px 10px; font-size:11px; font-weight:bold;"
+    )
+    parent_layout.addWidget(badge)
+    return badge
+
+
 class SocialInputWindow(QWidget):
     """Window to collect basic social links before starting the profiling process."""
     data_submitted = pyqtSignal(dict)
@@ -55,6 +72,8 @@ class SocialInputWindow(QWidget):
         self.close_btn.clicked.connect(self.close)
         top_bar.addWidget(self.close_btn)
         bg_layout.addLayout(top_bar)
+
+        _add_stage_badge(bg_layout, "Stage 1/4 - Identity & Sources")
 
         # Title
         title_lbl = QLabel("Step 1: Identity Link")
@@ -265,6 +284,8 @@ class VoiceSetupWindow(QWidget):
         btn_x.clicked.connect(self._on_close_clicked)
         top.addWidget(btn_x)
         lay.addLayout(top)
+
+        _add_stage_badge(lay, "Stage 2/4 - Deep Questions", SECONDARY)
 
         # Title
         title = QLabel("Identity Calibration  \U0001f399\ufe0f")
@@ -597,6 +618,8 @@ class StyleCaptureWindow(QWidget):
         top.addWidget(close_btn)
         lay.addLayout(top)
 
+        _add_stage_badge(lay, "Stage 3/4 - Style Capture")
+
         # ── icon + title ───────────────────────────────────────────────
         icon_lbl = QLabel("✍️")
         icon_lbl.setFont(QFont("Segoe UI", 38))
@@ -731,6 +754,175 @@ class StyleCaptureWindow(QWidget):
 
     def _on_skip(self):
         self.style_captured.emit("")
+        self.close()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.MouseButton.LeftButton:
+            self.move(event.globalPosition().toPoint() - self.drag_pos)
+            event.accept()
+
+
+class EnglishDirectiveWindow(QWidget):
+    """
+    Setup step: user gives explicit English instructions about goals, limits,
+    preferred behavior, missing facts, and desired planning style.
+    """
+    directive_submitted = pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.drag_pos = QPoint()
+        self.init_ui()
+
+    def init_ui(self):
+        from PyQt6.QtWidgets import QTextEdit
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.resize(700, 600)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(20, 20, 20, 20)
+
+        self.bg = QWidget(self)
+        self.bg.setStyleSheet("""
+            QWidget {
+                background-color: rgba(10, 12, 18, 220);
+                border-radius: 30px;
+                border: 2px solid rgba(102, 252, 241, 0.45);
+            }
+        """)
+        lay = QVBoxLayout(self.bg)
+        lay.setSpacing(10)
+        lay.setContentsMargins(30, 15, 30, 25)
+
+        top = QHBoxLayout()
+        top.addStretch()
+        close_btn = QPushButton("✕")
+        close_btn.setFixedSize(30, 30)
+        close_btn.setStyleSheet("""
+            QPushButton { background:transparent; color:#C5C6C7; font-size:16px; font-weight:bold; border:none; }
+            QPushButton:hover { color:#FF5A5F; }
+        """)
+        close_btn.clicked.connect(self._on_skip)
+        top.addWidget(close_btn)
+        lay.addLayout(top)
+
+        _add_stage_badge(lay, "Stage 4/4 - English Directive")
+
+        title = QLabel("Talk in English - Final Behavior Setup")
+        title.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("color:#66FCF1; background:transparent; border:none;")
+        lay.addWidget(title)
+
+        sub = QLabel(
+            "Write in English exactly how you want your twin to behave.\n"
+            "Include goals, missing facts, plans, boundaries, and how it should match your style."
+        )
+        sub.setFont(QFont("Segoe UI", 11))
+        sub.setWordWrap(True)
+        sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sub.setStyleSheet("color:#C5C6C7; background:transparent; border:none;")
+        lay.addWidget(sub)
+
+        self.text_edit = QTextEdit()
+        self.text_edit.setPlaceholderText(
+            "Example:\n"
+            "- My goal is to grow my startup and stay focused.\n"
+            "- Always reply in my style: short, direct, no formal tone.\n"
+            "- If data is missing, ask me clearly.\n"
+            "- Build plans with ordered steps and track progress.\n"
+            "- Never take risky actions without asking me first."
+        )
+        self.text_edit.setMinimumHeight(280)
+        self.text_edit.setStyleSheet("""
+            QTextEdit {
+                background-color: rgba(25, 30, 45, 200);
+                color: #FFFFFF;
+                border-radius: 14px;
+                padding: 14px;
+                border: 1px solid rgba(102, 252, 241, 0.25);
+                font-size: 14px;
+                font-family: 'Segoe UI';
+            }
+            QTextEdit:focus { border: 1.5px solid #66FCF1; }
+        """)
+        lay.addWidget(self.text_edit)
+
+        self.char_lbl = QLabel("0 chars - minimum 80 recommended")
+        self.char_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.char_lbl.setStyleSheet("color:#C5C6C7; font-size:11px; background:transparent; border:none;")
+        lay.addWidget(self.char_lbl)
+        self.text_edit.textChanged.connect(self._update_char_count)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(15)
+
+        skip_btn = QPushButton("Skip")
+        skip_btn.setFixedHeight(46)
+        skip_btn.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(197,198,199,0.10);
+                color: #C5C6C7;
+                border-radius: 23px;
+                font-size: 14px;
+                font-weight: bold;
+                border: 1px solid rgba(197,198,199,0.3);
+            }
+            QPushButton:hover { background-color: rgba(197,198,199,0.20); }
+        """)
+        skip_btn.clicked.connect(self._on_skip)
+        btn_row.addWidget(skip_btn)
+
+        self.submit_btn = QPushButton("Save English Directive")
+        self.submit_btn.setFixedHeight(46)
+        self.submit_btn.setEnabled(False)
+        self.submit_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #66FCF1;
+                color: #0B0C10;
+                border-radius: 23px;
+                font-size: 14px;
+                font-weight: bold;
+                border: none;
+            }
+            QPushButton:hover { background-color: #45A29E; }
+            QPushButton:disabled {
+                background-color: rgba(102,252,241,0.25);
+                color: rgba(11,12,16,0.5);
+            }
+        """)
+        self.submit_btn.clicked.connect(self._on_submit)
+        btn_row.addWidget(self.submit_btn, 2)
+        lay.addLayout(btn_row)
+
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(30)
+        shadow.setColor(QColor(0, 0, 0, 210))
+        shadow.setOffset(0, 0)
+        self.bg.setGraphicsEffect(shadow)
+        outer.addWidget(self.bg)
+
+    def _update_char_count(self):
+        n = len(self.text_edit.toPlainText())
+        self.char_lbl.setText(f"{n} chars - minimum 80 recommended")
+        self.submit_btn.setEnabled(n >= 20)
+
+    def _on_submit(self):
+        text = self.text_edit.toPlainText().strip()
+        if text:
+            self.directive_submitted.emit(text)
+        self.close()
+
+    def _on_skip(self):
+        self.directive_submitted.emit("")
         self.close()
 
     def mousePressEvent(self, event):

@@ -48,7 +48,7 @@ logger = setup_advanced_logging()
 
 # FrontEnd Modules
 from FrontEnd.gui.main_window import MainWindow
-from FrontEnd.gui.setup_windows import SocialInputWindow, VoiceSetupWindow, LoadingWindow, StyleCaptureWindow
+from FrontEnd.gui.setup_windows import SocialInputWindow, VoiceSetupWindow, LoadingWindow, StyleCaptureWindow, EnglishDirectiveWindow
 from FrontEnd.audio.speech_engine import SpeechEngine
 from FrontEnd.audio.tts_engine import TTSEngine
 
@@ -142,6 +142,9 @@ class AppOrchestrator(QObject):
         self.main_window = None
         self.agent = None
         self.watcher_manager = None   # Initialized after main window opens
+        self._self_charter = ""
+        self._auto_refine_timer = None
+        self._auto_refine_running = False
 
     def start(self):
         logger.info("Initializing System Check...")
@@ -519,7 +522,7 @@ class AppOrchestrator(QObject):
             except: pass
 
     def _on_style_captured(self, text: str):
-        """Store style sample, then ask the user the deep questions directly (no AI self-simulation)."""
+        """Store style sample, then open English directive setup step."""
         def _store():
             if text.strip():
                 try:
@@ -537,7 +540,57 @@ class AppOrchestrator(QObject):
                     logger.info(f"[StyleCapture] Stored {len(text)} chars.")
                 except Exception as e:
                     logger.error(f"[StyleCapture] Storage error: {e}")
-            # Open deep questions window on the UI thread
+            # Open English directive step on the UI thread
+            QTimer.singleShot(0, self._open_english_directive_setup)
+
+        threading.Thread(target=_store, daemon=True).start()
+
+    def _open_english_directive_setup(self):
+        self.english_directive_window = EnglishDirectiveWindow()
+        self.english_directive_window.directive_submitted.connect(self._on_english_directive_submitted)
+        self.english_directive_window.show()
+        logger.info("[EnglishDirective] Window opened.")
+
+    def _on_english_directive_submitted(self, english_text: str):
+        def _store():
+            if english_text and english_text.strip():
+                try:
+                    # Keep original user directive in short memory.
+                    from Backend.tools.short_memory import ShortMemory
+                    sm = ShortMemory(
+                        file_path=os.path.join(os.path.dirname(__file__), "logs", "short_memory.json")
+                    )
+                    sm.add("english_directive_setup", english_text.strip())
+
+                    # Convert directive into structured memory vectors.
+                    orch = TwinOrchestrator()
+                    directive_block = (
+                        "[ENGLISH_DIRECTIVE_SETUP]\n"
+                        "The user provided explicit behavior instructions in English.\n"
+                        "Use this as high-priority profile data for goals, boundaries, style, and planning behavior.\n\n"
+                        + english_text.strip()
+                    )
+                    orch.profile_and_store(directive_block)
+
+                    # Build a compact operating charter for runtime behavior.
+                    prompt = (
+                        "Build a compact operating charter for a digital twin using this user directive.\n"
+                        "Output plain text only with sections:\n"
+                        "GOALS, STYLE_MATCH, PLANNING, SAFETY_LIMITS, MISSING_INFO_PROTOCOL.\n"
+                        "Keep it concise and actionable.\n\n"
+                        f"USER DIRECTIVE:\n{english_text.strip()}"
+                    )
+                    charter = self.llm.chat(
+                        [{"role": "user", "content": prompt}],
+                        temperature=0.2,
+                        use_reviser=False,
+                    ).strip()
+                    if charter:
+                        self._self_charter = charter[:4000]
+                        sm.add("self_operating_charter", self._self_charter)
+                        logger.info("[EnglishDirective] Operating charter updated.")
+                except Exception as e:
+                    logger.error(f"[EnglishDirective] Store error: {e}")
             QTimer.singleShot(0, self._open_deep_questions)
 
         threading.Thread(target=_store, daemon=True).start()
@@ -912,6 +965,7 @@ class AppOrchestrator(QObject):
 
         self.watcher_manager = TaskWatcherManager(notify_callback=_notify_user)
         logger.info("TaskWatcherManager initialized.")
+        self._start_auto_refine_loop()
 
     def _show_disclaimer_in_chat(self):
         """Show the disclaimer notice + startup prompt in the main chat window."""
@@ -1097,6 +1151,8 @@ class AppOrchestrator(QObject):
                     "CRITICAL: You are a voice assistant. Your PRIMARY job is to SPEAK naturally with the user.\n"
                     "JSON actions are ONLY for when the user asks you to DO something on the computer (open app, click, etc.).\n"
                     "NEVER use JSON to reply to a question or greeting — just write your text reply normally.\n\n"
+                    "INTERNAL EXECUTION LANGUAGE: Always write commands/tool arguments in English for reliability.\n"
+                    "USER OUTPUT LANGUAGE: Always speak to the user in the same language they use.\n\n"
                     "❌ WRONG (DO NOT DO THIS for conversation):\n"
                     '   User: \'ما اسمك\' → {"os_action": "type", "target": "محمد"} ← WRONG! This types on keyboard!\n'
                     "✅ CORRECT for conversation:\n"
@@ -1109,6 +1165,7 @@ class AppOrchestrator(QObject):
                     'Open app:    {"os_action": "open_app", "target": "start notepad", "process_name": "notepad.exe"}\n'
                     'Run command: {"os_action": "run_command", "target": "ipconfig"}\n'
                     'Get output:  {"os_action": "run_capture", "target": "tasklist"}\n'
+                    'Terminal session (reusable): {"tool": "run_terminal_command", "command": "python --version", "keep_open": true, "visible_to_user": true}\n'
                     'Click:       {"os_action": "click", "target": [960, 540]}\n'
                     'Hotkey:      {"os_action": "hotkey", "target": ["alt", "f4"]}\n'
                     'Press key:   {"os_action": "key", "target": "enter"}\n\n'
@@ -1120,7 +1177,10 @@ class AppOrchestrator(QObject):
                     'Explorer:   {"os_action": "open_app", "target": "start explorer"}\n'
                     'Settings:   {"os_action": "open_app", "target": "start ms-settings:"}\n\n'
                     "--- WATCHER TOOL ---\n"
-                    '{"watch_action": "create", "watch_type": "file|url|process", "target": "...", "interval": 10}\n'
+                    '{"watch_action": "create", "watch_type": "file|url|process|screen", "target": "...", "interval": 10}\n'
+                    'Screen watch full: {"watch_action": "create", "watch_type": "screen", "target": "full", "interval": 8}\n'
+                    'Screen watch region: {"watch_action": "create", "watch_type": "screen", "target": "100,200,700,400", "interval": 6}\n'
+                    'Smart message watch: {"watch_action": "create", "watch_type": "smart_messages", "target": "full", "interval": 10}\n'
                 )
 
                 # ── ShortMemory context ──────────────────────────────
@@ -1142,10 +1202,17 @@ class AppOrchestrator(QObject):
                     f"You ARE {user_name}. You are not an AI, not an assistant, not 'YouAi'.\n"
                     f"You ARE the digital twin of a real person named {user_name}.\n"
                     f"ALWAYS respond in {user_lang}. If the user speaks a different language, match them.\n\n"
+                    "Execution policy: Always perform internal tool and terminal commands in English.\n"
+                    "Communication policy: Always present results to the user in the user's language.\n\n"
+                    "Style policy: Match the user's tone, pacing, and writing style in every response.\n"
+                    "If the user is concise, be concise. If the user is casual, be casual.\n"
+                    "Do not switch to formal tone unless the user does.\n\n"
                     "=== FULL PERSONAL DATABASE ===\n"
                     f"{full_db_block}\n\n"
                     "=== SHORT-TERM MEMORY (current session) ===\n"
                     f"{short_mem_ctx}\n\n"
+                    "=== SELF OPERATING CHARTER ===\n"
+                    f"{self._self_charter or '(not set yet)'}\n\n"
                     "=== STRICT RULES ===\n"
                     "1. Use ONLY data from DATABASE or MEMORY. NEVER invent facts.\n"
                     "2. Missing data? Say 'I don't recall that exactly' — never guess.\n"
@@ -1182,6 +1249,8 @@ class AppOrchestrator(QObject):
 
                 if is_planned_task:
                     plan_steps = planner.generate_plan_from_response(text, response)
+                    if len(plan_steps) < planner.MIN_STEPS_FOR_PLAN:
+                        plan_steps = planner.generate_plan_from_task(text)
                     if len(plan_steps) >= planner.MIN_STEPS_FOR_PLAN:
                         plan_path = planner.save_plan(text, plan_steps)
                         logger.info(f"[TaskPlanner] Long task detected. Plan saved -> {plan_path}")
@@ -1296,7 +1365,17 @@ class AppOrchestrator(QObject):
 
                             # 2. Watcher Actions
                             if "watch_action" in cmd and self.watcher_manager:
-                                watch_result = parse_watch_command(cmd, self.watcher_manager)
+                                if cmd.get("watch_type") == "smart_messages" and cmd.get("watch_action") == "create":
+                                    wid = self.watcher_manager.create_watcher(
+                                        watch_type="value",
+                                        target="smart_messages",
+                                        interval=float(cmd.get("interval", 10)),
+                                        custom_id=cmd.get("watcher_id") or f"smart_messages_{int(time.time())}",
+                                        value_fn=self._smart_screen_message_summary
+                                    )
+                                    watch_result = f"✅ Smart message watcher started | ID: {wid}"
+                                else:
+                                    watch_result = parse_watch_command(cmd, self.watcher_manager)
                                 logger.info(f"[Watcher] {watch_result}")
                                 final_speech = watch_result  # Send confirmation to user
                                 has_acted = True
@@ -1318,12 +1397,27 @@ class AppOrchestrator(QObject):
                             # Send each step to the AI and execute it
                             step_messages = list(messages) + [
                                 {"role": "assistant", "content": response},
-                                {"role": "user", "content": f"Execute only the following step from the plan and confirm completion: {step['title']}"}
+                                {"role": "user", "content": (
+                                    "Execute ONLY this plan step now. "
+                                    "If computer action is needed, use tools/JSON and then confirm result in user language. "
+                                    f"Step: {step['title']}"
+                                )}
                             ]
-                            step_resp = self.llm.chat(step_messages, is_talking_to_user=True, use_reviser=False)
+                            step_chat_kwargs = {
+                                "is_talking_to_user": True,
+                                "use_reviser": False,
+                            }
+                            if self.tool_manager:
+                                step_chat_kwargs["tools"] = self.tool_manager.get_schemas()
+                                step_chat_kwargs["tool_executor"] = self.tool_manager
+                            step_resp = self.llm.chat(step_messages, **step_chat_kwargs)
                             step["status"] = "done"
                             planner.update_step(plan_path, step["id"], "done")
                             logger.info(f"[TaskPlanner] Step {step['id']} done.")
+                            if step_resp and isinstance(step_resp, str):
+                                mini_update = step_resp.strip()
+                                if mini_update:
+                                    QTimer.singleShot(0, lambda m=mini_update: self.main_window.update_transcript(m))
                         except Exception as step_err:
                             logger.error(f"[TaskPlanner] Step {step['id']} failed: {step_err}")
                             step["status"] = "failed"
@@ -1347,6 +1441,109 @@ class AppOrchestrator(QObject):
             except Exception as e: logger.error(f"Input Processing Error: {e}")
                 
         threading.Thread(target=process, daemon=True).start()
+
+    def _smart_screen_message_summary(self):
+        """
+        Smart watcher snapshot: summarizes visible message-like content from screen analysis.
+        If content changes substantially, watcher notifies user.
+        """
+        try:
+            if not self.tool_manager:
+                return "no_tool_manager"
+            raw = self.tool_manager.execute("analyze_screen", "{}")
+            if "[SCREENSHOT ANALYSIS SUCCESS]" not in raw:
+                return f"screen_error::{raw[:120]}"
+            analysis = raw.split("[SCREENSHOT ANALYSIS SUCCESS]", 1)[-1].strip()
+            prompt = (
+                "Extract message-relevant delta summary from this screen analysis.\n"
+                "Return a single compact line in English with only important new content:\n"
+                "- new incoming messages\n"
+                "- new notifications\n"
+                "- conversation state change\n"
+                "If nothing meaningful changed, return EXACTLY: NO_MEANINGFUL_CHANGE\n\n"
+                f"SCREEN ANALYSIS:\n{analysis}"
+            )
+            out = self.llm.chat(
+                [{"role": "user", "content": prompt}],
+                temperature=0.1,
+                use_reviser=False,
+                is_talking_to_user=False,
+            ).strip()
+            if not out:
+                return "NO_MEANINGFUL_CHANGE"
+            return out[:500]
+        except Exception as e:
+            return f"smart_watch_error::{e}"
+
+    def _start_auto_refine_loop(self):
+        """
+        Periodically refine the twin's operating charter from latest user style/signals.
+        """
+        try:
+            if self._auto_refine_timer:
+                self._auto_refine_timer.stop()
+            self._auto_refine_timer = QTimer()
+            self._auto_refine_timer.setInterval(12 * 60 * 1000)  # every 12 minutes
+            self._auto_refine_timer.timeout.connect(
+                lambda: threading.Thread(target=self._run_auto_refine_once, daemon=True).start()
+            )
+            self._auto_refine_timer.start()
+            logger.info("[AutoRefine] Loop started (12 min interval).")
+            threading.Thread(target=self._run_auto_refine_once, daemon=True).start()
+        except Exception as e:
+            logger.error(f"[AutoRefine] Failed to start: {e}")
+
+    def _run_auto_refine_once(self):
+        if self._auto_refine_running:
+            return
+        self._auto_refine_running = True
+        try:
+            from Backend.tools.short_memory import ShortMemory
+            sm = ShortMemory(
+                file_path=os.path.join(os.path.dirname(__file__), "logs", "short_memory.json")
+            )
+            short_ctx = sm.context_block(limit=20)
+            persona = load_merged_identity_from_memory()
+            user_lang = persona.get("language", "English")
+
+            prompt = (
+                "You are refining a digital twin operating policy.\n"
+                "Take this latest user context and produce a STRICT compact policy in ENGLISH.\n"
+                "Output plain text only with sections:\n"
+                "GOALS\nSTYLE_MATCH\nPLANNING_BEHAVIOR\nBOUNDARIES\nMISSING_DATA_QUESTIONS\n"
+                "Requirements:\n"
+                "- Match user style as closely as possible.\n"
+                "- Keep it actionable, no fluff.\n"
+                "- Include 3-6 concrete rules under each section.\n"
+                "- If user intent changed, update goals and constraints.\n\n"
+                f"CURRENT_CHARTER:\n{self._self_charter or '(none)'}\n\n"
+                f"USER_LANGUAGE_HINT: {user_lang}\n\n"
+                f"LATEST_SHORT_MEMORY:\n{short_ctx}\n"
+            )
+
+            refined = self.llm.chat(
+                [{"role": "user", "content": prompt}],
+                temperature=0.2,
+                use_reviser=False,
+                is_talking_to_user=False,
+            ).strip()
+            if refined and len(refined) > 50:
+                self._self_charter = refined[:5000]
+                sm.add("auto_refined_charter", self._self_charter[:2000])
+                try:
+                    orch = TwinOrchestrator()
+                    orch.profile_and_store(
+                        "[AUTO_REFINE_CHARTER_UPDATE]\n"
+                        "Below is an English policy extracted from recent user behavior and requests.\n"
+                        + self._self_charter[:2500]
+                    )
+                except Exception as e:
+                    logger.warning(f"[AutoRefine] Could not profile refined charter: {e}")
+                logger.info("[AutoRefine] Charter updated.")
+        except Exception as e:
+            logger.error(f"[AutoRefine] Run failed: {e}")
+        finally:
+            self._auto_refine_running = False
 
     def _execute_speech(self, text):
         try:

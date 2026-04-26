@@ -2,11 +2,16 @@ import sys
 import math
 import random
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QHBoxLayout, 
-    QPushButton, QGraphicsDropShadowEffect
+    QWidget, QVBoxLayout, QLabel, QHBoxLayout,
+    QPushButton, QGraphicsDropShadowEffect, QFrame
 )
 from PyQt6.QtCore import Qt, QTimer, QPoint, QPointF, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt6.QtGui import QPainter, QColor, QRadialGradient, QFont, QPainterPath
+
+PRIMARY = "#66FCF1"
+TEXT_SOFT = "#C5C6C7"
+TEXT_DIM = "rgba(197,198,199,0.72)"
+
 
 class DigitalVisualizerWidget(QWidget):
     def __init__(self, parent=None):
@@ -89,6 +94,7 @@ class DigitalVisualizerWidget(QWidget):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self._status_mode = "listening"
         self.init_ui()
         self.drag_pos = QPoint()
 
@@ -105,17 +111,31 @@ class MainWindow(QWidget):
         self.bg_widget = QWidget(self)
         self.bg_widget.setStyleSheet("""
             QWidget {
-                background-color: rgba(15, 15, 20, 150);
-                border-radius: 40px;
-                border: 2px solid rgba(102, 252, 241, 0.2);
+                background-color: rgba(10, 12, 18, 215);
+                border-radius: 36px;
+                border: 2px solid rgba(102, 252, 241, 0.25);
             }
         """)
         
         bg_layout = QVBoxLayout(self.bg_widget)
+        bg_layout.setContentsMargins(26, 16, 26, 24)
+        bg_layout.setSpacing(10)
         
         # Top Bar (Close button)
         top_bar = QHBoxLayout()
+        self.brand_chip = QLabel("YOU AI  •  DIGITAL TWIN")
+        self.brand_chip.setStyleSheet(
+            "color:#66FCF1; background:rgba(102,252,241,0.08); border:1px solid rgba(102,252,241,0.35); "
+            "border-radius:12px; padding:6px 10px; font-size:11px; font-weight:bold; letter-spacing:1px;"
+        )
+        top_bar.addWidget(self.brand_chip)
         top_bar.addStretch()
+        self.status_chip = QLabel("LISTENING")
+        self.status_chip.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_chip.setStyleSheet(
+            "color:#0B0C10; background:#66FCF1; border-radius:10px; padding:5px 9px; font-size:10px; font-weight:bold;"
+        )
+        top_bar.addWidget(self.status_chip)
         self.close_btn = QPushButton("✕")
         self.close_btn.setFixedSize(30, 30)
         self.close_btn.setStyleSheet("""
@@ -141,17 +161,17 @@ class MainWindow(QWidget):
         title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_lbl.setStyleSheet("""
             color: #66FCF1;
-            letter-spacing: 5px;
+            letter-spacing: 4px;
             background: transparent;
             border: none;
         """)
         bg_layout.addWidget(title_lbl)
 
-        subtitle_lbl = QLabel("Digital Clone")
+        subtitle_lbl = QLabel("Your Personal Digital Twin")
         subtitle_font = QFont("Segoe UI", 14)
         subtitle_lbl.setFont(subtitle_font)
         subtitle_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle_lbl.setStyleSheet("color: #C5C6C7; background: transparent; border: none;")
+        subtitle_lbl.setStyleSheet("color: rgba(197,198,199,0.78); background: transparent; border: none;")
         bg_layout.addWidget(subtitle_lbl)
 
         # Spacer
@@ -165,19 +185,45 @@ class MainWindow(QWidget):
         bg_layout.addStretch(1)
 
         # Transcript Area
+        transcript_card = QFrame()
+        transcript_card.setStyleSheet("""
+            QFrame {
+                background-color: rgba(22, 28, 44, 200);
+                border-radius: 16px;
+                border: 1px solid rgba(102, 252, 241, 0.22);
+            }
+        """)
+        transcript_layout = QVBoxLayout(transcript_card)
+        transcript_layout.setContentsMargins(14, 10, 14, 12)
+        transcript_layout.setSpacing(8)
+
+        self.transcript_title = QLabel("Live Conversation")
+        self.transcript_title.setStyleSheet(
+            "color:#66FCF1; background:transparent; border:none; font-size:11px; font-weight:bold; letter-spacing:1px;"
+        )
+        self.transcript_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        transcript_layout.addWidget(self.transcript_title)
+
         self.transcript_lbl = QLabel("I'm listening...")
-        self.transcript_lbl.setFont(QFont("Segoe UI", 18))
-        self.transcript_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.transcript_lbl.setFont(QFont("Segoe UI", 16))
+        self.transcript_lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.transcript_lbl.setWordWrap(True)
         self.transcript_lbl.setStyleSheet("""
             color: #FFFFFF;
-            background-color: rgba(31, 40, 51, 150);
-            border-radius: 15px;
-            padding: 15px;
-            border: 1px solid rgba(102, 252, 241, 0.2);
+            background: transparent;
+            border: none;
+            padding: 0px;
         """)
-        self.transcript_lbl.setMinimumHeight(150)
-        bg_layout.addWidget(self.transcript_lbl)
+        self.transcript_lbl.setMinimumHeight(125)
+        transcript_layout.addWidget(self.transcript_lbl)
+
+        self.assist_hint_lbl = QLabel("Tip: Talk naturally. Ask, command, or say 'start' to complete profile.")
+        self.assist_hint_lbl.setStyleSheet(
+            "color: rgba(197,198,199,0.70); background: transparent; border:none; font-size:10px;"
+        )
+        self.assist_hint_lbl.setWordWrap(True)
+        transcript_layout.addWidget(self.assist_hint_lbl)
+        bg_layout.addWidget(transcript_card)
 
         # Drop Shadow for the main window
         shadow = QGraphicsDropShadowEffect(self)
@@ -200,26 +246,36 @@ class MainWindow(QWidget):
             event.accept()
 
     def update_transcript(self, text):
-        self.transcript_lbl.setText(f"« {text} »")
+        self.transcript_lbl.setText(text.strip())
         
     def set_thinking_state(self):
+        self._status_mode = "thinking"
         self.visualizer.set_listening(False)
-        self.transcript_lbl.setText("Processing...")
+        self.status_chip.setText("THINKING")
+        self.status_chip.setStyleSheet(
+            "color:#0B0C10; background:#B388EB; border-radius:10px; padding:5px 9px; font-size:10px; font-weight:bold;"
+        )
+        self.transcript_title.setText("Processing")
+        self.transcript_lbl.setText("Working on your request...")
         self.transcript_lbl.setStyleSheet("""
-            color: #B388EB;
-            background-color: rgba(31, 40, 51, 150);
-            border-radius: 15px;
-            padding: 15px;
-            border: 1px solid rgba(179, 136, 235, 0.3);
+            color: #E4D0FF;
+            background: transparent;
+            border: none;
+            padding: 0px;
         """)
 
     def set_listening_state(self):
+        self._status_mode = "listening"
         self.visualizer.set_listening(True)
+        self.status_chip.setText("LISTENING")
+        self.status_chip.setStyleSheet(
+            "color:#0B0C10; background:#66FCF1; border-radius:10px; padding:5px 9px; font-size:10px; font-weight:bold;"
+        )
+        self.transcript_title.setText("Live Conversation")
         self.transcript_lbl.setStyleSheet("""
             color: #FFFFFF;
-            background-color: rgba(31, 40, 51, 150);
-            border-radius: 15px;
-            padding: 15px;
-            border: 1px solid rgba(102, 252, 241, 0.2);
+            background: transparent;
+            border: none;
+            padding: 0px;
         """)
 
